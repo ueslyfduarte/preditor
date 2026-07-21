@@ -9,8 +9,11 @@ class EcossistemaPreditivoCompletoV67:
         }
 
     def _normalizar_min_max(self, valores, minimo, maximo):
-        if maximo == minimo: return 0.5
-        return (valores - minimo) / (maximo - minimo)
+        if maximo == min_minimo: return 0.5
+        min_val = min(valores) if len(valores) > 0 else 0
+        max_val = max(valores) if len(valores) > 0 else 100
+        if max_val == min_val: return np.zeros_like(valores) + 0.5
+        return (valores - min_val) / (max_val - min_val)
 
     def processar_bloco_unico(self, texto_bruto):
         dados = {}
@@ -115,7 +118,7 @@ class EcossistemaPreditivoCompletoV67:
         im_m = min(100.0, max(0.0, (cc_m * 0.45) + (geral_m * 0.35) + (tab_m * 0.20) + bonus_zebra_m))
         fpt_m = -10 if (prat_m == "Elite" and rodada <= 10) else 0
         irc_m = min(100.0, max(0.0, 50 + (d.get('urgencia_real_m',50) + fpt_m + d.get('orgulho_ferido_m',0) + d.get('revanche_m',0)) * fac))
-              # VISITANTE OVERALL
+                # VISITANTE OVERALL
         fvo_v = np.mean([d.get('ataques_fora',105)/media_liga['ataques'], d.get('atq_perigosos_fora',65)/media_liga['atq_perigosos'], d.get('chutes_fora',13.5)/media_liga['chutes'], d.get('chutes_gol_fora',4.5)/media_liga['chutes_gol'], d.get('gols_marcados_fora',1.45)/media_liga['gols'], d.get('xg_marcado_fora',1.5)/media_liga['xg']]) * 50
         c_gol_p_gol_time_v = max(0.1, d.get('chutes_gol_fora',4.5))/max(0.1, d.get('gols_marcados_fora',1.45))
         fco_v = (c_gol_p_gol_liga / c_gol_p_gol_time_v) * 50
@@ -152,7 +155,7 @@ class EcossistemaPreditivoCompletoV67:
         bonus_zebra_v = 15.0 * fac if (prat_v == "Baixo" and d.get('veio_de_vitoria_contra_elite_v', 0) == 1) else 0.0
         im_v = min(100.0, max(0.0, (cc_v * 0.45) + (geral_v * 0.35) + (tab_v * 0.20) + bonus_zebra_v))
         fpt_v = -10 if (prat_v == "Elite" and rodada <= 10) else 0
-        irc_v = min(100.0, max(0.0, 50 + (urg_v + d.get('orgulho_ferido_v',0) + d.get('revanche_v',0)) * fac))
+        irc_v = min(100.0, max(0.0, 50 + (d.get('urgencia_real_v',50) + fpt_v + d.get('orgulho_ferido_v',0) + d.get('revanche_v',0)) * fac))
 
         juncao_m = (overall_m + im_m + irc_m) / 3
         juncao_v = (overall_v + im_v + irc_v) / 3
