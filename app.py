@@ -673,12 +673,14 @@ jogos_def_v_mod = motor_p2.modular_historico_defensivo(vis["historico_defensivo_
 res_atq_m = motor_p2.calcular_bloco_ataque(jogos_atq_m_mod, dados_partida_completa["medias_liga_mandante_brutas"])
 res_def_m = motor_p2.calcular_bloco_defesa(jogos_def_m_mod, dados_partida_completa["medias_liga_mandante_brutas"])
 res_con_m = motor_p2.calcular_bloco_consistencia(jogos_atq_m_mod, jogos_def_m_mod, 85, 60, dados_partida_completa["medias_liga_mandante_brutas"])
-res_res_m = motor_p2.calcular_bloco_resistencia(mnd["dados_resistencia"], dados_partida_completa["medias_liga_mandante_brutas"])
+res_res_m = motor_p2.calcular_bloco_resistencia(mnd["dados_resistencia"], dados_partida_completa["medias_liga_mandante_brutas"], mnd)
+
+
 
 res_atq_v = motor_p2.calcular_bloco_ataque(jogos_atq_v_mod, dados_partida_completa["medias_liga_visitante_brutas"])
 res_def_v = motor_p2.calcular_bloco_defesa(jogos_def_v_mod, dados_partida_completa["medias_liga_visitante_brutas"])
 res_con_v = motor_p2.calcular_bloco_consistencia(jogos_atq_v_mod, jogos_def_v_mod, 70, 50, dados_partida_completa["medias_liga_visitante_brutas"])
-res_res_v = motor_p2.calcular_bloco_resistencia(vis["dados_resistencia"], dados_partida_completa["medias_liga_visitante_brutas"])
+res_res_v = motor_p2.calcular_bloco_resistencia(vis["dados_resistencia"], dados_partida_completa["medias_liga_visitante_brutas"], vis)
 
 tabela_p2 = {
     "Blocos Técnicos do Overall": [mnd["nome"], vis["nome"]],
