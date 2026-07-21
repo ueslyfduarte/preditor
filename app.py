@@ -222,11 +222,11 @@ class MaquinaOverallV28:
         return {"Nota_Resistencia": round(nota_resistencia, 2)}
 
 
-=====================================================================
+#=====================================================================
 
-DIVISÓRIA 3: MÓDULO ÍNDICE DE MOMENTO (IM COMPLETO COM TRAVAS)
+#DIVISÓRIA 3: MÓDULO ÍNDICE DE MOMENTO (IM COMPLETO COM TRAVAS)
 
-=====================================================================
+#=====================================================================
 class IndiceMomentoV28:
 """
 Módulo 3 do Método de Análise Esportiva V2.8.
