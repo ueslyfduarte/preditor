@@ -10,12 +10,10 @@ class EcossistemaPreditivoCompletoV67:
 
     def _normalizar_min_max(self, valores, minimo, maximo):
         arr = np.array(valores)
-        if arr.size == 0:
-            return arr
+        if arr.size == 0: return arr
         min_val = np.min(arr)
         max_val = np.max(arr)
-        if max_val == min_val:
-            return np.zeros_like(arr) + 0.5
+        if max_val == min_val: return np.zeros_like(arr) + 0.5
         return (arr - min_val) / (max_val - min_val)
 
     def processar_bloco_unico(self, texto_bruto):
@@ -32,14 +30,11 @@ class EcossistemaPreditivoCompletoV67:
                     if '[' in valor:
                         elementos = valor.replace('[','').replace(']','').split(',')
                         elementos = [x.strip() for x in elementos if x.strip()]
-                        try:
-                            dados[chave] = [float(x) for x in elementos]
-                        except ValueError:
-                            dados[chave] = elementos
+                        try: dados[chave] = [float(x) for x in elementos]
+                        except ValueError: dados[chave] = elementos
                     else:
                         dados[chave] = float(valor) if '.' in valor or valor.isdigit() else valor
-                except ValueError:
-                    dados[chave] = valor
+                except ValueError: dados[chave] = valor
         return dados
 
     def calcular_ajuste_empates(self, historico_pontos, prateleiras_adversarios, condicao, prateleira_propria):
@@ -59,7 +54,7 @@ class EcossistemaPreditivoCompletoV67:
                     else: pontos_ajustados.append(0.0)
         return np.sum(pontos_ajustados)
 
-    def推 executar_calculo_completo(self, d):
+    def executar_calculo_completo(self, d):
         media_liga = {
             'gols': d.get('gols_liga', self.media_liga_padrao['gols']),
             'xg': d.get('xg_liga', self.media_liga_padrao['xg']),
@@ -80,7 +75,7 @@ class EcossistemaPreditivoCompletoV67:
 
         pv_atq, pv_def = 1.0, 1.0
         if prat_v == "Baixo" and prat_m == "Elite": pv_def, pv_atq = 0.70, 1.30
-        elif pv_v == "Elite" and prat_m == "Baixo": pv_def, pv_atq = 1.40, 0.60
+        elif prat_v == "Elite" and prat_m == "Baixo": pv_def, pv_atq = 1.40, 0.60
 
         fvo_m = np.mean([d.get('ataques_casa',105)/media_liga['ataques'], d.get('atq_perigosos_casa',65)/media_liga['atq_perigosos'], d.get('chutes_casa',13.5)/media_liga['chutes'], d.get('chutes_gol_casa',4.5)/media_liga['chutes_gol'], d.get('gols_marcados_casa',1.45)/media_liga['gols'], d.get('xg_marcado_casa',1.5)/media_liga['xg']]) * 50
         c_gol_p_gol_liga = media_liga['chutes_gol'] / media_liga['gols']
@@ -158,7 +153,7 @@ class EcossistemaPreditivoCompletoV67:
         bonus_zebra_v = 15.0 * fac if (prat_v == "Baixo" and d.get('veio_de_vitoria_contra_elite_v', 0) == 1) else 0.0
         im_v = min(100.0, max(0.0, (cc_v * 0.45) + (geral_v * 0.35) + (tab_v * 0.20) + bonus_zebra_v))
         fpt_v = -10 if (prat_v == "Elite" and rodada <= 10) else 0
-        irc_v = min(100.0, max(0.0, 50 + (d.get('urgencia_real_v',50) + fpt_v + d.get('orgulho_ferido_v',0) + d.get('revanche_v',0)) * fac))
+        irc_v = min(100.0, max(0.0, 50 + (urg_v + d.get('orgulho_ferido_v',0) + d.get('revanche_v',0)) * fac))
 
         juncao_m = (overall_m + im_m + irc_m) / 3
         juncao_v = (overall_v + im_v + irc_v) / 3
@@ -216,4 +211,3 @@ if st.button("EXECUTAR ANÁLISE COMPLETA", use_container_width=True):
             st.subheader(f"Diferença Crítica Final: {disp:+} pontos")
             
         except Exception as e: st.error(f"Erro nas equações: {str(e)}. Verifique a formatação.")
-
