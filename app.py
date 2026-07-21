@@ -222,65 +222,76 @@ class MaquinaOverallV28:
         return {"Nota_Resistencia": round(nota_resistencia, 2)}
 
 
-#=====================================================================
+# =====================================================================
+# DIVISÓRIA 3: MÓDULO ÍNDICE DE MOMENTO (IM COMPLETO COM TRAVAS)
+# =====================================================================
 
-#DIVISÓRIA 3: MÓDULO ÍNDICE DE MOMENTO (IM COMPLETO COM TRAVAS)
-
-#=====================================================================
 class IndiceMomentoV28:
-"""
-Módulo 3 do Método de Análise Esportiva V2.8.
-Calcula o Índice de Momento (IM) de 0 a 100.
-"""
-def init(self, fac: float):
-self.fac = fac
-self.base_score = 50.0
-def converter_historico_nota(self, historico: List[str], mando: str, nivel_time: int, nivel_adversario: int) -> float:
-if not historico:
-return self.base_score
-pontos_acumulados = 0.0
-for resultado in historico:
-if resultado == 'V':
-pontos_acumulados += 3.0
-elif resultado == 'D':
-pontos_acumulados += 0.0
-elif resultado == 'E':
-if mando == 'visitante':
-pontos_acumulados += 2.0 if nivel_time < nivel_adversario else 3.0
-else:
-if nivel_time <= nivel_adversario:
-pontos_acumulados += 2.0
-elif nivel_time == 1 and nivel_adversario == 4:
-pontos_acumulados += 0.0
-else:
-pontos_acumulados += 1.0
-total_pontos_disputados = len(historico) * 3.0
-return (pontos_acumulados / total_pontos_disputados) * 100.0
-def calcular_bloco_tabela_dinamica(self, time: Dict[str, Any], nivel_adversario: int) -> float:
-if nivel_adversario == 1:
-multiplicador = 1.6
-elif nivel_adversario == 2 or nivel_adversario == 3:
-multiplicador = 1.0
-else:
-multiplicador = 0.0
-oscilacao_momentanea = (time['posicao_real'] - time['posicao_momentanea']) * multiplicador
-oscilacao_estrutural = (time['posicao_pre_campeonato'] - time['posicao_real']) * multiplicador
-nota_bruta = self.base_score + oscilacao_momentanea + oscilacao_estrutural
-return max(0.0, min(100.0, nota_bruta))
-def calcular_im_final(self, dados_time: Dict[str, Any], adversario_nivel: int, mandante: bool) -> float:
-def obter_nivel(p): return 1 if p<=5 else 2 if p<=10 else 3 if p<=15 else 4
-nv_time = obter_nivel(dados_time['posicao_real'])
-nv_pre_time = obter_nivel(dados_time['posicao_pre_campeonato'])
-mando_str = 'mandante' if mandante else 'visitante'
-nota_campo_3j = self.converter_historico_nota(dados_time['historico_mando_3'], mando_str, nv_time, adversario_nivel)
-nota_campo_5j = self.converter_historico_nota(dados_time['historico_mando_5'], mando_str, nv_time, adversario_nivel)
-bloco_campo = (nota_campo_3j * 0.65) + (nota_campo_5j * 0.35)
-nota_geral_3j = self.converter_historico_nota(dados_time['historico_geral_3'], 'geral', nv_time, adversario_nivel)
-nota_geral_5j = self.converter_historico_nota(dados_time['historico_geral_5'], 'geral', nv_time, adversario_nivel)
-nota_geral_10j = self.converter_historico_nota(dados_time['historico_geral_10'], 'geral', nv_time, adversario_nivel)
-bloco_geral = (nota_geral_3j * 0.50) + (nota_geral_5j * 0.35) + (nota_geral_10j * 0.15)
-bloco_tabela = self.calcular_bloco_tabela_dinamica(dados_time, adversario_nivel)
-ganhou_zebra = dados_time.get('venceu_ultimo_jogo_contra_elite', False)
-bonus_zebra = 15.0 * self.fac if (ganhou_zebra and nv_pre_time == 4) else 0.0
-im_final = (bloco_campo * 0.45) + (bloco_geral * 0.35) + (bloco_tabela * 0.20) + bonus_zebra
-return round(max(0.0, min(100.0, im_final)), 2)
+    """
+    Módulo 3 do Método de Análise Esportiva V2.8.
+    Calcula o Índice de Momento (IM) de 0 a 100.
+    """
+    def __init__(self, fac: float):
+        self.fac = fac
+        self.base_score = 50.0
+
+    def converter_historico_nota(self, historico: List[str], mando: str, nivel_time: int, nivel_adversario: int) -> float:
+        if not historico:
+            return self.base_score
+            
+        pontos_acumulados = 0.0
+        for resultado in historico:
+            if resultado == 'V':
+                pontos_acumulados += 3.0
+            elif resultado == 'D':
+                pontos_acumulados += 0.0
+            elif resultado == 'E':
+                if mando == 'visitante':
+                    pontos_acumulados += 2.0 if nivel_time < nivel_adversario else 3.0
+                else:
+                    if nivel_time <= nivel_adversario:
+                        pontos_acumulados += 2.0
+                    elif nivel_time == 1 and nivel_adversario == 4:
+                        pontos_acumulados += 0.0
+                    else:
+                        pontos_acumulados += 1.0
+                        
+        total_pontos_disputados = len(historico) * 3.0
+        return (pontos_acumulados / total_pontos_disputados) * 100.0
+
+    def calcular_bloco_tabela_dinamica(self, time: Dict[str, Any], nivel_adversario: int) -> float:
+        if nivel_adversario == 1:
+            multiplicador = 1.6
+        elif nivel_adversario == 2 or nivel_adversario == 3:
+            multiplicador = 1.0
+        else:
+            multiplicador = 0.0
+
+        oscilacao_momentanea = (time['posicao_real'] - time['posicao_momentanea']) * multiplicador
+        oscilacao_estrutural = (time['posicao_pre_campeonato'] - time['posicao_real']) * multiplicador
+        
+        nota_bruta = self.base_score + oscilacao_momentanea + oscilacao_estrutural
+        return max(0.0, min(100.0, nota_bruta))
+
+    def calcular_im_final(self, dados_time: Dict[str, Any], adversario_nivel: int, mandante: bool) -> float:
+        def obter_nivel(p): return 1 if p<=5 else 2 if p<=10 else 3 if p<=15 else 4
+        nv_time = obter_nivel(dados_time['posicao_real'])
+        nv_pre_time = obter_nivel(dados_time['posicao_pre_campeonato'])
+        
+        mando_str = 'mandante' if mandante else 'visitante'
+        nota_campo_3j = self.converter_historico_nota(dados_time['historico_mando_3'], mando_str, nv_time, adversario_nivel)
+        nota_campo_5j = self.converter_historico_nota(dados_time['historico_mando_5'], mando_str, nv_time, adversario_nivel)
+        bloco_campo = (nota_campo_3j * 0.65) + (nota_campo_5j * 0.35)
+        
+        nota_geral_3j = self.converter_historico_nota(dados_time['historico_geral_3'], 'geral', nv_time, adversario_nivel)
+        nota_geral_5j = self.converter_historico_nota(dados_time['historico_geral_5'], 'geral', nv_time, adversario_nivel)
+        nota_geral_10j = self.converter_historico_nota(dados_time['historico_geral_10'], 'geral', nv_time, adversario_nivel)
+        bloco_geral = (nota_geral_3j * 0.50) + (nota_geral_5j * 0.35) + (nota_geral_10j * 0.15)
+        
+        bloco_tabela = self.calcular_bloco_tabela_dinamica(dados_time, adversario_nivel)
+        
+        ganhou_zebra = dados_time.get('venceu_ultimo_jogo_contra_elite', False)
+        bonus_zebra = 15.0 * self.fac if (ganhou_zebra and nv_pre_time == 4) else 0.0
+
+        im_final = (bloco_campo * 0.45) + (bloco_geral * 0.35) + (bloco_tabela * 0.20) + bonus_zebra
+        return round(max(0.0, min(100.0, im_final)), 2)
