@@ -126,7 +126,7 @@ class MaquinaOverallV28:
             jogo_mod = {
                 "ataques_sofridos": jogo['ataques_sofridos'] * fmp['erro_defensivo'],
                 "ataques_perigosos_sofridos": jogo['ataques_perigosos_sofridos'] * fmp['erro_defensivo'],
-                "chutes_sofridos": jogo['chutes_sofridos'] * fmp['erro_defensivo'],
+                "chutes_sofridos": INT_VAR if 'INT_VAR' in globals() else jogo['chutes_sofridos'] * fmp['erro_defensivo'],
                 "chutes_gol_sofridos": jogo['chutes_gol_sofridos'] * fmp['erro_defensivo'],
                 "gols_sofridos": jogo['gols_sofridos'] * fmp['erro_defensivo'],
                 "xg_cedido": jogo['xg_cedido'] * fmp['erro_defensivo']
@@ -178,10 +178,12 @@ class MaquinaOverallV28:
         frd = np.mean(proporcoes_frd) * self.base_score
 
         chutes_sofridos_por_gol_time = med_time['chutes_gol_sofridos'] / max(0.0001, med_time['gols_sofridos'])
-chutes_sofridos_por_gol_liga = liga['chutes_gol_sofridos'] / max(0.0001, liga['gols_sofridos'])
-fcd = (chutes_sofridos_por_gol_time / max(0.0001, chutes_sofridos_por_gol_liga)) * self.base_score
-nota_defesa = min(100.0, max(0.0, (frd * 0.60) + (fcd * 0.40)))
-return {"FRD": round(frd, 2), "FCD": round(fcd, 2), "Nota_Defesa": round(nota_defesa, 2)}
+        chutes_sofridos_por_gol_liga = liga['chutes_gol_sofridos'] / max(0.0001, liga['gols_sofridos'])
+        fcd = (chutes_sofridos_por_gol_time / max(0.0001, chutes_sofridos_por_gol_liga)) * self.base_score
+
+        nota_defesa = min(100.0, max(0.0, (frd * 0.60) + (fcd * 0.40)))
+        return {"FRD": round(frd, 2), "FCD": round(fcd, 2), "Nota_Defesa": round(nota_defesa, 2)}
+
     def calcular_bloco_consistencia(self, jogos_atq_mod: List[Dict[str, float]], jogos_def_mod: List[Dict[str, float]], im_max: float, im_min: float, liga: Dict[str, float]) -> Dict[str, float]:
         """Executa o Passo 1-C calculando a dispersão das proporções moduladas rodada a rodada"""
         proporcoes_rodada = []
@@ -204,17 +206,21 @@ return {"FRD": round(frd, 2), "FCD": round(fcd, 2), "Nota_Defesa": round(nota_de
         nota_consistencia = (fdm * 0.60) + (ier * 0.40)
         return {"FDM": round(fdm, 2), "IER": round(ier, 2), "Nota_Consistencia": round(nota_consistencia, 2)}
 
-def calcular_bloco_resistencia(self, time_pressao: Dict[str, float], liga_pressao: Dict[str, float]) -> Dict[str, float]:
-"""Executa o Passo 1-D: Bloco de Resistência à Pressão"""
-fcd_vol = (liga_pressao['xg_cedido'] / max(0.0001, time_pressao['xg_cedido'])) * (liga_pressao['chutes_sofridos'] / max(0.0001, time_pressao['chutes_sofridos']))
-fcd_nota = min(100.0, fcd_vol * self.base_score)
-time_chutes_por_gol = time_pressao['chutes_gol_sofridos'] / max(0.0001, time_pressao['gols_sofridos'])
-liga_chutes_por_gol = liga_pressao['chutes_gol_sofridos'] / max(0.0001, liga_pressao['gols_sofridos'])
-egz_nota = min(100.0, (time_chutes_por_gol / max(0.0001, liga_chutes_por_gol)) * self.base_score)
-fri_nota = min(100.0, (time_pressao['pontos_recuperados'] / max(0.0001, time_pressao['pontos_disputados_atras'])) * 100.0)
-fzc_nota = min(100.0, max(0.0, 50.0 + ((time_pressao['gols_marcados_fim'] - time_pressao['gols_sofridos_fim']) * 10.0)))
-nota_resistencia = (fzc_nota * 0.30) + (egz_nota * 0.30) + (fri_nota * 0.20) + (fcd_nota * 0.20)
-return {"Nota_Resistencia": round(nota_resistencia, 2)}
+    def calcular_bloco_resistencia(self, time_pressao: Dict[str, float], liga_pressao: Dict[str, float]) -> Dict[str, float]:
+        """Executa o Passo 1-D: Bloco de Resistência à Pressão"""
+        fcd_vol = (liga_pressao['xg_cedido'] / max(0.0001, time_pressao['xg_cedido'])) * (liga_pressao['chutes_sofridos'] / max(0.0001, time_pressao['chutes_sofridos']))
+        fcd_nota = min(100.0, fcd_vol * self.base_score)
+
+        time_chutes_por_gol = time_pressao['chutes_gol_sofridos'] / max(0.0001, time_pressao['gols_sofridos'])
+        liga_chutes_por_gol = liga_pressao['chutes_gol_sofridos'] / max(0.0001, liga_pressao['gols_sofridos'])
+        egz_nota = min(100.0, (time_chutes_por_gol / max(0.0001, liga_chutes_por_gol)) * self.base_score)
+
+        fri_nota = min(100.0, (time_pressao['pontos_recuperados'] / max(0.0001, time_pressao['pontos_disputados_atras'])) * 100.0)
+        fzc_nota = min(100.0, max(0.0, 50.0 + ((time_pressao['gols_marcados_fim'] - time_pressao['gols_sofridos_fim']) * 10.0)))
+
+        nota_resistencia = (fzc_nota * 0.30) + (egz_nota * 0.30) + (fri_nota * 0.20) + (fcd_nota * 0.20)
+        return {"Nota_Resistencia": round(nota_resistencia, 2)}
+
 
 =====================================================================
 
