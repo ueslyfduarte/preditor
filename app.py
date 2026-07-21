@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
 
-class EcossistemaPreditivoCompletoV67:
+class EcossistemaPreditivoCompletoV75:
     def __init__(self):
         self.media_liga_padrao = {
             'gols': 1.45, 'xg': 1.50, 'chutes': 13.5, 'chutes_gol': 4.5,
@@ -30,16 +30,15 @@ class EcossistemaPreditivoCompletoV67:
                     if '[' in valor:
                         elementos = valor.replace('[','').replace(']','').split(',')
                         elementos = [x.strip() for x in elementos if x.strip()]
-                        try: 
-                            dados[chave] = [float(x) for x in elementos]
-                        except ValueError: 
-                            dados[chave] = elementos
+                        try: dados[chave] = [float(x) for x in elementos]
+                        except ValueError: dados[chave] = elementos
                     else:
                         dados[chave] = float(valor) if '.' in valor or valor.isdigit() else valor
                 except ValueError: dados[chave] = valor
         return dados
 
     def calcular_ajuste_empates(self, historico_pontos, prateleiras_adversarios, condicao, prateleira_propria):
+        """PASSO 3: Retrovisor de Ajuste de Empates Conforme o Manual Rígido"""
         if not historico_pontos: return 0.0
         pontos_ajustados = []
         for i, p in enumerate(historico_pontos):
@@ -50,7 +49,7 @@ class EcossistemaPreditivoCompletoV67:
                 if condicao == "visitante":
                     if prateleira_propria == "Elite": pontos_ajustados.append(2.0)
                     else: pontos_ajustados.append(3.0)
-                else:
+                else: # Mandante
                     if prat_adv in ["Elite", "Meio"] and prateleira_propria != "Elite": pontos_ajustados.append(2.0)
                     elif prat_adv == "Meio" and prateleira_propria == "Elite": pontos_ajustados.append(1.0)
                     else: pontos_ajustados.append(0.0)
@@ -79,6 +78,7 @@ class EcossistemaPreditivoCompletoV67:
         if prat_v == "Baixo" and prat_m == "Elite": pv_def, pv_atq = 0.70, 1.30
         elif prat_v == "Elite" and prat_m == "Baixo": pv_def, pv_atq = 1.40, 0.60
 
+        # --- MANDANTE OVERALL (PASSO 1) ---
         fvo_m = np.mean([d.get('ataques_casa',105)/media_liga['ataques'], d.get('atq_perigosos_casa',65)/media_liga['atq_perigosos'], d.get('chutes_casa',13.5)/media_liga['chutes'], d.get('chutes_gol_casa',4.5)/media_liga['chutes_gol'], d.get('gols_marcados_casa',1.45)/media_liga['gols'], d.get('xg_marcado_casa',1.5)/media_liga['xg']]) * 50
         c_gol_p_gol_liga = media_liga['chutes_gol'] / media_liga['gols']
         c_gol_p_gol_time = max(0.1, d.get('chutes_gol_casa',4.5))/max(0.1, d.get('gols_marcados_casa',1.45))
@@ -107,18 +107,25 @@ class EcossistemaPreditivoCompletoV67:
         nota_pres_m = (fcd_pres_m * 0.30) + (egz_m * 0.30) + (fri_m * 0.20) + (fzc_m * 0.20)
         overall_m = min(100.0, max(0.0, (nota_cons_m * 0.35) + (nota_atq_m * 0.25) + (nota_def_m * 0.25) + (nota_pres_m * 0.15)))
 
+        # --- MANDANTE MOMENTO (PASSO 2 & 3 COM RETROVISOR) ---
         prat_adv_m = d.get('prateleiras_adversarios_mando_m', ['Meio']*5)
         pts_cc_3_m = self.calcular_ajuste_empates(d.get('jogos_mando_3_m', [0.0,0.0,0.0]), prat_adv_m[:3], "mandante", prat_m) / 9.0 * 100
         pts_cc_5_m = self.calcular_ajuste_empates(d.get('jogos_mando_5_m', [0.0,0.0,0.0,0.0,0.0]), prat_adv_m, "mandante", prat_m) / 15.0 * 100
         cc_m = (pts_cc_3_m * 0.65) + (pts_cc_5_m * 0.35)
-        geral_m = ((np.sum(d.get('jogos_gerais_3_m', [0.0,0.0,0.0]))/9*100)*0.50 + (np.sum(d.get('jogos_gerais_5_m', [0.0,0.0,0.0,0.0,0.0]))/15*100)*0.35 + (np.sum(d.get('jogos_gerais_10_m', [0.0]*10))/30*100)*0.15)
+        
+        geral_m_3 = d.get('jogos_gerais_3_m', [0.0,0.0,0.0])
+        geral_m_5 = d.get('jogos_gerais_5_m', [0.0,0.0,0.0,0.0,0.0])
+        geral_m_10 = d.get('jogos_gerais_10_m', [0.0]*10)
+        geral_m = ((np.sum(geral_m_3)/9*100)*0.50 + (np.sum(geral_m_5)/15*100)*0.35 + (np.sum(geral_m_10)/30*100)*0.15)
+        
         mult_prat_m = 1.6 if d.get('prateleira_v') == "Elite" else (1.0 if d.get('prateleira_v') == prat_m else 0.0)
         tab_m = 50 + ((d.get('posicao_real_m',10) - d.get('posicao_momentanea_m',10)) * mult_prat_m)
         bonus_zebra_m = 15.0 * fac if (prat_m == "Baixo" and d.get('veio_de_vitoria_contra_elite_m', 0) == 1) else 0.0
         im_m = min(100.0, max(0.0, (cc_m * 0.45) + (geral_m * 0.35) + (tab_m * 0.20) + bonus_zebra_m))
+
         fpt_m = -10 if (prat_m == "Elite" and rodada <= 10) else 0
-        irc_m = min(100.0, max(0.0, 50 + (d.get('urgencia_real_m',50) + fpt_m + d.get('orgulho_ferido_m',0) + d.get('revanche_m',0)) * fac))
-                # VISITANTE OVERALL
+        urg_m = d.get('urgencia_real_m', 50) + fpt_m
+        irc_m = min(100.0, max(0.0, 50 + (urg_m + d.get('orgulho_ferido_m',0) + d.get('revanche_m',0)) *         # --- VISITANTE OVERALL (PASSO 1) ---
         fvo_v = np.mean([d.get('ataques_fora',105)/media_liga['ataques'], d.get('atq_perigosos_fora',65)/media_liga['atq_perigosos'], d.get('chutes_fora',13.5)/media_liga['chutes'], d.get('chutes_gol_fora',4.5)/media_liga['chutes_gol'], d.get('gols_marcados_fora',1.45)/media_liga['gols'], d.get('xg_marcado_fora',1.5)/media_liga['xg']]) * 50
         c_gol_p_gol_time_v = max(0.1, d.get('chutes_gol_fora',4.5))/max(0.1, d.get('gols_marcados_fora',1.45))
         fco_v = (c_gol_p_gol_liga / c_gol_p_gol_time_v) * 50
@@ -145,20 +152,30 @@ class EcossistemaPreditivoCompletoV67:
         nota_pres_v = (fcd_pres_v * 0.30) + (egz_v * 0.30) + (fri_v * 0.20) + (fzc_v * 0.20)
         overall_v = min(100.0, max(0.0, (nota_cons_v * 0.35) + (nota_atq_v * 0.25) + (nota_def_v * 0.25) + (nota_pres_v * 0.15)))
 
+        # --- VISITANTE MOMENTO (PASSO 2 & 3 COM RETROVISOR) ---
         prat_adv_v = d.get('prateleiras_adversarios_mando_v', ['Meio']*5)
         pts_cc_3_v = self.calcular_ajuste_empates(d.get('jogos_mando_3_v', [0.0,0.0,0.0]), prat_adv_v[:3], "visitante", prat_v) / 9.0 * 100
         pts_cc_5_v = self.calcular_ajuste_empates(d.get('jogos_mando_5_v', [0.0,0.0,0.0,0.0,0.0]), prat_adv_v, "visitante", prat_v) / 15.0 * 100
         cc_v = (pts_cc_3_v * 0.65) + (pts_cc_5_v * 0.35)
-        geral_v = ((np.sum(d.get('jogos_gerais_3_v', [0.0,0.0,0.0]))/9*100)*0.50 + (np.sum(d.get('jogos_gerais_5_v', [0.0,0.0,0.0,0.0,0.0]))/15*100)*0.35 + (np.sum(d.get('jogos_gerais_10_v', [0.0]*10))/30*100)*0.15)
+        
+        geral_v_3 = d.get('jogos_gerais_3_v', [0.0,0.0,0.0])
+        geral_v_5 = d.get('jogos_gerais_5_v', [0.0,0.0,0.0,0.0,0.0])
+        geral_v_10 = d.get('jogos_gerais_10_v', [0.0]*10)
+        geral_v = ((np.sum(geral_v_3)/9*100)*0.50 + (np.sum(geral_v_5)/15*100)*0.35 + (np.sum(geral_v_10)/30*100)*0.15)
+        
         mult_prat_v = 1.6 if d.get('prateleira_m') == "Elite" else (1.0 if d.get('prateleira_m') == prat_v else 0.0)
         tab_v = 50 + ((d.get('posicao_real_v',10) - d.get('posicao_momentanea_v',10)) * mult_prat_v)
         bonus_zebra_v = 15.0 * fac if (prat_v == "Baixo" and d.get('veio_de_vitoria_contra_elite_v', 0) == 1) else 0.0
         im_v = min(100.0, max(0.0, (cc_v * 0.45) + (geral_v * 0.35) + (tab_v * 0.20) + bonus_zebra_v))
-        fpt_v = -10 if (prat_v == "Elite" and rodada <= 10) else 0
-        irc_v = min(100.0, max(0.0, 50 + (d.get('urgencia_real_v',50) + fpt_v + d.get('orgulho_ferido_v',0) + d.get('revanche_v',0)) * fac))
 
+        # IRC VISITANTE
+        fpt_v = -10 if (prat_v == "Elite" and rodada <= 10) else 0
+        irc_v = min(100.0, max(0.0, 50 + (urg_v + d.get('orgulho_ferido_v',0) + d.get('revanche_v',0)) * fac))
+
+        # --- PASSO 4: JUNÇÃO E DISPARIDADE ---
         juncao_m = (overall_m + im_m + irc_m) / 3
         juncao_v = (overall_v + im_v + irc_v) / 3
+
         return {
             'm_nome': d.get('nome_m', 'Mandante'), 'v_nome': d.get('nome_v', 'Visitante'),
             'm_pos': d.get('posicao_real_m', 10), 'v_pos': d.get('posicao_real_v', 10),
@@ -167,14 +184,18 @@ class EcossistemaPreditivoCompletoV67:
             'im_m': round(im_m, 2), 'im_v': round(im_v, 2),
             'irc_m': round(irc_m, 2), 'irc_v': round(irc_v, 2),
             'final_m': round(juncao_m, 2), 'final_v': round(juncao_v, 2),
-            'disparidade': round(juncao_m - juncao_v, 2), 'dados_reais_liga': usando_dados_reais_liga
+            'disparidade': round(juncao_m - juncao_v, 2), 'dados_reais_liga': usando_dados_reais_liga,
+            'cc_m': round(cc_m, 2), 'cc_v': round(cc_v, 2),
+            'geral_m': round(geral_m, 2), 'geral_v': round(geral_v, 2),
+            'tab_m': round(tab_m, 2), 'tab_v': round(tab_v, 2),
+            'bz_m': round(bonus_zebra_m, 2), 'bz_v': round(bonus_zebra_v, 2)
         }
 
 st.set_page_config(page_title="Preditor Rígido V6.7", layout="centered")
 st.title("🚀 Sistema Preditivo Unificado V6.7")
 st.caption("Fórmulas Inteiras Restauradas Conforme o Manual")
 
-app = EcossistemaPreditivoCompletoV67()
+app = EcossistemaPreditivoCompletoV75()
 texto_input = st.text_area("Cole as estatísticas da partida:", height=250)
 
 if st.button("EXECUTAR ANÁLISE COMPLETA", use_container_width=True):
@@ -203,11 +224,28 @@ if st.button("EXECUTAR ANÁLISE COMPLETA", use_container_width=True):
             c3.metric(f"Psicológico (IRC) {res['m_nome']}", f"{res['irc_m']} pts")
             c3.metric(f"Psicológico (IRC) {res['v_nome']}", f"{res['irc_v']} pts")
 
+            # --- DETALHAMENTO DE INDICE DE MOMENTO (PASSO 2 SOLICITADO) ---
+            st.markdown("---")
+            st.markdown("### 📈 DETALHAMENTO DO ÍNDICE DE MOMENTO (PASSO 2 & 3)")
+            col_im_m, col_im_v = st.columns(2)
+            with col_im_m:
+                st.markdown(f"**🏠 Recortes {res['m_nome']}:**")
+                st.write(f"- Condição de Campo (Ajuste Empates 45%): `{res['cc_m']} pts`")
+                st.write(f"- Histórico Geral (35%): `{res['geral_m']} pts`")
+                st.write(f"- Tabela Dinâmica (20%): `{res['tab_m']} pts`")
+                st.write(f"- Bônus Zebra Histórica: `{res['bz_m']} pts`")
+            with col_im_v:
+                st.markdown(f"**🚀 Recortes {res['v_nome']}:**")
+                st.write(f"- Condição de Campo (Ajuste Empates 45%): `{res['cc_v']} pts`")
+                st.write(f"- Histórico Geral (35%): `{res['geral_v']} pts`")
+                st.write(f"- Tabela Dinâmica (20%): `{res['tab_v']} pts`")
+                st.write(f"- Bônus Zebra Histórica: `{res['bz_v']} pts`")
+
             st.markdown("---")
             st.markdown("### 🎯 PASSO 4: TELA DE CONFRONTO DIRETO E DISPARIDADE")
             col_f1, col_f2 = st.columns(2)
-            col_f1.metric(f"Nota Junção {res['m_nome']}", f"{res['final_m']} pts")
-            col_f2.metric(f"Nota Junção {res['v_nome']}", f"{res['final_v']} pts")
+            col_f1.metric(f"Nota Junção {res['final_m']}", f"{res['final_m']} pts")
+            col_f2.metric(f"Nota Junção {res['final_v']}", f"{res['final_v']} pts")
             
             disp = res['disparidade']
             st.subheader(f"Diferença Crítica Final: {disp:+} pontos")
