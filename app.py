@@ -206,7 +206,7 @@ class MaquinaOverallV28:
         nota_consistencia = (fdm * 0.60) + (ier * 0.40)
         return {"FDM": round(fdm, 2), "IER": round(ier, 2), "Nota_Consistencia": round(nota_consistencia, 2)}
 
-        def calcular_bloco_resistencia(self, time_pressao: Dict[str, float], liga_pressao: Dict[str, float], jogo_atual_time: Dict[str, Any]) -> Dict[str, float]:
+    def calcular_bloco_resistencia(self, time_pressao: Dict[str, float], liga_pressao: Dict[str, float], jogo_atual_time: Dict[str, Any]) -> Dict[str, float]:
         """Executa o Passo 1-D: Bloco de Resistência à Pressão corrigido contra quebra de chaves"""
         # Puxa os dados de volume defensivo do último jogo ou histórico geral do time para evitar o KeyError
         xg_cedido_time = jogo_atual_time['historico_defensivo_jogos'][0]['xg_cedido'] if jogo_atual_time.get('historico_defensivo_jogos') else 1.0
@@ -216,7 +216,7 @@ class MaquinaOverallV28:
         fcd_vol = (liga_pressao['xg_cedido'] / max(0.0001, xg_cedido_time)) * (liga_pressao['chutes_sofridos'] / max(0.0001, chutes_sofridos_time))
         fcd_nota = min(100.0, fcd_vol * self.base_score)
 
-        time_chutes_por_gol = chutes_gol_sofridos_time / max(0.0001, time_pressao['gols_sofridos_fim'])
+        time_chutes_por_gol = chutes_gol_sofridos_time / max(0.0001, max(0.0001, time_pressao.get('gols_sofridos_fim', 1.0)))
         liga_chutes_por_gol = liga_pressao['chutes_gol_sofridos'] / max(0.0001, liga_pressao['gols_sofridos'])
         egz_nota = min(100.0, (time_chutes_por_gol / max(0.0001, liga_chutes_por_gol)) * self.base_score)
 
@@ -224,6 +224,7 @@ class MaquinaOverallV28:
         fzc_nota = min(100.0, max(0.0, 50.0 + ((time_pressao['gols_marcados_fim'] - time_pressao['gols_sofridos_fim']) * 10.0)))
 
         return {"Nota_Resistencia": round((fzc_nota * 0.30) + (egz_nota * 0.30) + (fri_nota * 0.20) + (fcd_nota * 0.20), 2)}
+
 
 
 
