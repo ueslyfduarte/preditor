@@ -9,11 +9,14 @@ class EcossistemaPreditivoCompletoV67:
         }
 
     def _normalizar_min_max(self, valores, minimo, maximo):
-        if maximo == min_minimo: return 0.5
-        min_val = min(valores) if len(valores) > 0 else 0
-        max_val = max(valores) if len(valores) > 0 else 100
-        if max_val == min_val: return np.zeros_like(valores) + 0.5
-        return (valores - min_val) / (max_val - min_val)
+        arr = np.array(valores)
+        if arr.size == 0:
+            return arr
+        min_val = np.min(arr)
+        max_val = np.max(arr)
+        if max_val == min_val:
+            return np.zeros_like(arr) + 0.5
+        return (arr - min_val) / (max_val - min_val)
 
     def processar_bloco_unico(self, texto_bruto):
         dados = {}
@@ -56,7 +59,7 @@ class EcossistemaPreditivoCompletoV67:
                     else: pontos_ajustados.append(0.0)
         return np.sum(pontos_ajustados)
 
-    def executar_calculo_completo(self, d):
+    def推 executar_calculo_completo(self, d):
         media_liga = {
             'gols': d.get('gols_liga', self.media_liga_padrao['gols']),
             'xg': d.get('xg_liga', self.media_liga_padrao['xg']),
@@ -77,7 +80,7 @@ class EcossistemaPreditivoCompletoV67:
 
         pv_atq, pv_def = 1.0, 1.0
         if prat_v == "Baixo" and prat_m == "Elite": pv_def, pv_atq = 0.70, 1.30
-        elif prat_v == "Elite" and prat_m == "Baixo": pv_def, pv_atq = 1.40, 0.60
+        elif pv_v == "Elite" and prat_m == "Baixo": pv_def, pv_atq = 1.40, 0.60
 
         fvo_m = np.mean([d.get('ataques_casa',105)/media_liga['ataques'], d.get('atq_perigosos_casa',65)/media_liga['atq_perigosos'], d.get('chutes_casa',13.5)/media_liga['chutes'], d.get('chutes_gol_casa',4.5)/media_liga['chutes_gol'], d.get('gols_marcados_casa',1.45)/media_liga['gols'], d.get('xg_marcado_casa',1.5)/media_liga['xg']]) * 50
         c_gol_p_gol_liga = media_liga['chutes_gol'] / media_liga['gols']
@@ -118,7 +121,7 @@ class EcossistemaPreditivoCompletoV67:
         im_m = min(100.0, max(0.0, (cc_m * 0.45) + (geral_m * 0.35) + (tab_m * 0.20) + bonus_zebra_m))
         fpt_m = -10 if (prat_m == "Elite" and rodada <= 10) else 0
         irc_m = min(100.0, max(0.0, 50 + (d.get('urgencia_real_m',50) + fpt_m + d.get('orgulho_ferido_m',0) + d.get('revanche_m',0)) * fac))
-                # VISITANTE OVERALL
+        # VISITANTE OVERALL
         fvo_v = np.mean([d.get('ataques_fora',105)/media_liga['ataques'], d.get('atq_perigosos_fora',65)/media_liga['atq_perigosos'], d.get('chutes_fora',13.5)/media_liga['chutes'], d.get('chutes_gol_fora',4.5)/media_liga['chutes_gol'], d.get('gols_marcados_fora',1.45)/media_liga['gols'], d.get('xg_marcado_fora',1.5)/media_liga['xg']]) * 50
         c_gol_p_gol_time_v = max(0.1, d.get('chutes_gol_fora',4.5))/max(0.1, d.get('gols_marcados_fora',1.45))
         fco_v = (c_gol_p_gol_liga / c_gol_p_gol_time_v) * 50
