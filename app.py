@@ -182,25 +182,28 @@ chutes_sofridos_por_gol_liga = liga['chutes_gol_sofridos'] / max(0.0001, liga['g
 fcd = (chutes_sofridos_por_gol_time / max(0.0001, chutes_sofridos_por_gol_liga)) * self.base_score
 nota_defesa = min(100.0, max(0.0, (frd * 0.60) + (fcd * 0.40)))
 return {"FRD": round(frd, 2), "FCD": round(fcd, 2), "Nota_Defesa": round(nota_defesa, 2)}
-def calcular_bloco_consistencia(self, jogos_atq_mod: List[Dict[str, float]], jogos_def_mod: List[Dict[str, float]], im_max: float, im_min: float, liga: Dict[str, float]) -> Dict[str, float]:
-"""Executa o Passo 1-C calculando a dispersão das proporções moduladas rodada a rodada"""
-proporcoes_rodada = []
-for i in range(len(jogos_atq_mod)):
-ja = jogos_atq_mod[i]
-jd = jogos_def_mod[i]
-vetor_rodada = [
-ja['ataques'] / max(0.0001, liga['ataques']),
-ja['chutes_gol'] / max(0.0001, liga['chutes_gol']),
-ja['gols'] / max(0.0001, liga['gols']),
-liga['gols_sofridos'] / max(0.0001, jd['gols_sofridos']),
-liga['xg_cedido'] / max(0.0001, jd['xg_cedido'])
-]
-proporcoes_rodada.append(np.std(vetor_rodada))
-fdm_std = np.mean(proporcoes_rodada) if proporcoes_rodada else 0.0
-fdm = max(0.0, min(100.0, 100.0 - (fdm_std * 100.0)))
-ier = max(0.0, min(100.0, 100.0 - (im_max - im_min)))
-nota_consistencia = (fdm * 0.60) + (ier * 0.40)
-return {"FDM": round(fdm, 2), "IER": round(ier, 2), "Nota_Consistencia": round(nota_consistencia, 2)}
+    def calcular_bloco_consistencia(self, jogos_atq_mod: List[Dict[str, float]], jogos_def_mod: List[Dict[str, float]], im_max: float, im_min: float, liga: Dict[str, float]) -> Dict[str, float]:
+        """Executa o Passo 1-C calculando a dispersão das proporções moduladas rodada a rodada"""
+        proporcoes_rodada = []
+        for i in range(len(jogos_atq_mod)):
+            ja = jogos_atq_mod[i]
+            jd = jogos_def_mod[i]
+            vetor_rodada = [
+                ja['ataques'] / max(0.0001, liga['ataques']),
+                ja['chutes_gol'] / max(0.0001, liga['chutes_gol']),
+                ja['gols'] / max(0.0001, liga['gols']),
+                liga['gols_sofridos'] / max(0.0001, jd['gols_sofridos']),
+                liga['xg_cedido'] / max(0.0001, jd['xg_cedido'])
+            ]
+            proporcoes_rodada.append(np.std(vetor_rodada))
+            
+        fdm_std = np.mean(proporcoes_rodada) if proporcoes_rodada else 0.0
+        fdm = max(0.0, min(100.0, 100.0 - (fdm_std * 100.0)))
+        ier = max(0.0, min(100.0, 100.0 - (im_max - im_min)))
+        
+        nota_consistencia = (fdm * 0.60) + (ier * 0.40)
+        return {"FDM": round(fdm, 2), "IER": round(ier, 2), "Nota_Consistencia": round(nota_consistencia, 2)}
+
 def calcular_bloco_resistencia(self, time_pressao: Dict[str, float], liga_pressao: Dict[str, float]) -> Dict[str, float]:
 """Executa o Passo 1-D: Bloco de Resistência à Pressão"""
 fcd_vol = (liga_pressao['xg_cedido'] / max(0.0001, time_pressao['xg_cedido'])) * (liga_pressao['chutes_sofridos'] / max(0.0001, time_pressao['chutes_sofridos']))
