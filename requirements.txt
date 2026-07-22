@@ -2,4 +2,4 @@ numpy
 beautifulsoup4
 requests
 pandas
-lxml
+yfinance
