@@ -54,13 +54,13 @@ class PainelInicialV28:
         return 4                          
 
         def calcular_nivel_dinamico(self, ranking_pre, posicao_atual):
-        if self.rodada_atual <= 10:
+            if self.rodada_atual <= 10:
             posicao_ponderada = (ranking_pre * 0.70) + (posicao_atual * 0.30)
-        elif 11 <= self.rodada_atual <= 25:
+            elif 11 <= self.rodada_atual <= 25:
             posicao_ponderada = (ranking_pre * 0.30) + (posicao_atual * 0.70)
-        else:
+            else:
             posicao_ponderada = posicao_atual
-        return self.definir_nivel_posicao(int(np.round(posicao_ponderada)))
+            return self.definir_nivel_posicao(int(np.round(posicao_ponderada)))
 
 
             # =====================================================================
