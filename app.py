@@ -254,7 +254,7 @@ dados_partida_completa = {
         "observacoes_texto": "O time contratou um novo atacante titular que estreia hoje."
     },
     "visitante": {
-        "name": "Time Visitante B", "liga_origem": "Liga Nacional 2",
+        "nome": "Time Visitante B", "liga_origem": "Liga Nacional 2",
         "posicao_real": 16, "posicao_momentanea": 18, "posicao_pre_campeonato": 10,
         "historico_ofensivo_jogos": [
             {"nivel_adversario_dia": 2, "ataques": 85, "ataques_perigosos": 45, "chutes": 9, "chutes_gol": 2, "gols": 0, "xg": 0.7}
