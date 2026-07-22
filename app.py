@@ -53,14 +53,15 @@ class PainelInicialV28:
         if 11 <= posicao <= 15: return 3  
         return 4                          
 
-    def calcular_nivel_dinamico(self, ranking_pre: int, posicao_atual: int) -> int:
+        def calcular_nivel_dinamico(self, ranking_pre, posicao_atual):
         if self.rodada_atual <= 10:
             posicao_ponderada = (ranking_pre * 0.70) + (posicao_atual * 0.30)
         elif 11 <= self.rodada_atual <= 25:
             posicao_ponderada = (ranking_pre * 0.30) + (posicao_atual * 0.70)
         else:
             posicao_ponderada = posicao_atual
-        return self.definir_nivel_posicao(int(np.round(
+        return self.definir_nivel_posicao(int(np.round(posicao_ponderada)))
+
 
             # =====================================================================
 # DIVISÓRIA 2: MOTOR ESTATÍSTICO PARTE B (MÁQUINA DE OVERALL - PARTE 1)
