@@ -60,9 +60,10 @@ class PainelInicialV28:
             posicao_ponderada = (ranking_pre * 0.30) + (posicao_atual * 0.70)
         else:
             posicao_ponderada = posicao_atual
-        return self.definir_nivel_posicao(int(np.round(posicao_ponderada)))
-        # =====================================================================
-# DIVISÓRIA 2: MOTOR ESTATÍSTICO PARTE B (MÁQUINA DE OVERALL)
+        return self.definir_nivel_posicao(int(np.round(
+
+            # =====================================================================
+# DIVISÓRIA 2: MOTOR ESTATÍSTICO PARTE B (MÁQUINA DE OVERALL - PARTE 1)
 # =====================================================================
 
 class MaquinaOverallV28:
@@ -108,8 +109,7 @@ class MaquinaOverallV28:
                 "xg_cedido": jogo['xg_cedido'] * fmp['erro_defensivo']
             })
         return jogos_modulados
-
-    def calcular_bloco_ataque(self, jogos_modulados: List[Dict[str, float]], liga: Dict[str, float]) -> Dict[str, float]:
+            def calcular_bloco_ataque(self, jogos_modulados: List[Dict[str, float]], liga: Dict[str, float]) -> Dict[str, float]:
         if not jogos_modulados: return {"FVO": self.base_score, "FCO": self.base_score, "Nota_Ataque": self.base_score}
         keys = ["ataques", "ataques_perigosos", "chutes", "chutes_gol", "gols", "xg"]
         med_time = {k: np.mean([j[k] for j in jogos_modulados]) for k in keys}
@@ -200,8 +200,6 @@ class IndiceMomentoV28:
         bloco_tabela = self.calcular_bloco_tabela_dinamica(dados_time, adversario_nivel)
         bonus_zebra = 15.0 * self.fac if (dados_time.get('venceu_ultimo_jogo_contra_elite', False) and obter_nivel(dados_time['posicao_pre_campeonato']) == 4) else 0.0
         return round(max(0.0, min(100.0, (bloco_campo * 0.45) + (bloco_geral * 0.35) + (bloco_tabela * 0.20) + bonus_zebra)), 2)
-
-
 # =====================================================================
 # DIVISÓRIA 3: MASSA DE DADOS DE ENTRADA SIMULADA (PADRÃO CONTRATO V2.8)
 # =====================================================================
@@ -273,38 +271,19 @@ dados_partida_completa = {
         "observacoes_texto": "Três defensores titulares estão suspensos e desfalcam a equipe."
     }
 }
-if odds and isinstance(odds, dict) and odds.get("over_15_ft_pct") is not None:
 
-    pct_metodo_o15ft = min(98.0, max(5.0, forca_gols_geral - 5.0))
-    dif = pct_metodo_o15ft - odds["over_15_ft_pct"]
-    linhas_mercados.append(["Gols: Over 1.5 FT", f"{odds['over_15_ft_pct']}%", f"{pct_metodo_o15ft:.1f}%", f"{dif:+.1f}%", "🟢 VALOR OVER 1.5" if dif >= 5.0 else "🔴 EVITAR" if dif <= -5.0 else "🟡 Neutro"])
+# =====================================================================
+# ADIÇÃO CRÍTICA: TRATAMENTO E INICIALIZAÇÃO DE VARIÁVEIS CONTEXTUAIS
+# =====================================================================
+ctx = dados_partida_completa["contexto_confronto"]
+odds = dados_partida_completa["odds_mercado_porcentagens"]
+mnd = dados_partida_completa["mandante"]
+vis = dados_partida_completa["visitante"]
 
-if odds["over_25_ft_pct"] is not None:
-    dif = (forca_gols_geral - 15.0) - odds["over_25_ft_pct"]
-    linhas_mercados.append(["Gols: Over 2.5 FT", f"{odds['over_25_ft_pct']}%", f"{(forca_gols_geral - 15.0):.1f}%", f"{dif:+.1f}%", "🟢 VALOR OVER 2.5" if dif >= 5.0 else "🔴 EVITAR / IR NO UNDER" if dif <= -5.0 else "🟡 Neutro"])
-
-
-if odds["ambas_marcam_sim_pct"] is not None:
-    dif = (forca_gols_geral - 12.0) - odds["ambas_marcam_sim_pct"]
-    linhas_mercados.append(["Ambas Marcam: SIM", f"{odds['ambas_marcam_sim_pct']}%", f"{(forca_gols_geral - 12.0):.1f}%", f"{dif:+.1f}%", "🟢 VALOR AMBAS" if dif >= 5.0 else "🔴 EVITAR" if dif <= -5.0 else "🟡 Neutro"])
-
-if odds["linha_escanteios_mercado"]["over_pct"] is not None:
-    volume_chutes_combinado = (res_atq_m["FVO"] + res_atq_v["FVO"]) / 2
-    pct_metodo_cantos = min(95.0, max(5.0, volume_chutes_combinado + 2.0))
-    dif = pct_metodo_cantos - odds["linha_escanteios_mercado"]["over_pct"]
-    linhas_mercados.append([f"Escanteios: Over {odds['linha_escanteios_mercado']['linha']}", f"{odds['linha_escanteios_mercado']['over_pct']}%", f"{pct_metodo_cantos:.1f}%", f"{dif:+.1f}%", "🟢 VALOR CANTOS" if dif >= 5.0 else "🔴 EVITAR CANTOS" if dif <= -5.0 else "🟡 Neutro"])
-
-if pct_metodo_casa > 60.0 and diferenca_critica >= 10.0:
-    linhas_mercados.append(["[Sugestão App] Empate Anula (DNB Casa)", "Proteção Ativa", "Alta Probabilidade", "FMP Favorável", "💎 ENTRADA RECOMENDADA"])
-elif pct_metodo_fora > 45.0 and diferenca_critica <= -10.0:
-    linhas_mercados.append(["[Sugestão App] Empate Anula (DNB Fora)", "Proteção Ativa", "Alta Probabilidade", "FMP Favorável", "💎 ENTRADA RECOMENDADA"])
-
-df_probabilidades = pd.DataFrame(linhas_mercados, columns=["Mercado Operacional", "% Mercado", "% Método", "Variação Líquida", "Alerta Técnico"])
-st.table(df_probabilidades)
-
-st.info("💡 Observação: Caso os mercados de Cantos ou Gols HT não possuam dados preenchidos na estrutura de entrada, eles são omitidos automaticamente deste painel.")
-st.write("---")
-
+# Inicialização do Módulo 1 para descobrir os níveis reais dinâmicos
+inicializador_p1 = PainelInicialV28(rodada_atual=ctx["rodada_atual"])
+nv_real_m = inicializador_p1.calcular_nivel_dinamico(mnd["posicao_pre_campeonato"], mnd["posicao_real"])
+nv_real_v = inicializador_p1.calcular_nivel_dinamico(vis["posicao_pre_campeonato"], vis["posicao_real"])
 # ---------------------------------------------------------------------
 # ETAPA 6: LEITURA AUTÔNOMA DE OBSERVAÇÕES E DESFALQUES
 # ---------------------------------------------------------------------
@@ -365,10 +344,9 @@ st.dataframe(df_p2)
 
 st.markdown("**📝 Resenha Estatística - Força Estrutural:**")
 st.write(f"• **Análise Ofensiva:** O power de fogo do mandante ({res_atq_m['Nota_Ataque']} pts) enfrenta uma linha defensiva vulnerável do visitante ({res_def_v['Nota_Defesa']} pts), criando um cenário técnico propício para gols do mandante.")
-st.write(f"• **Análise de Inconstância:** A consistência tática do visitante está severamente compromised de rodada em rodada, registrando apenas `{res_con_v['Nota_Consistencia']}` pontos.")
+st.write(f"• **Análise de Inconstância:** A consistência tática do visitante está severamente comprometida de rodada em rodada, registrando apenas `{res_con_v['Nota_Consistencia']}` pontos.")
 
 st.write("---")
-
 # ---------------------------------------------------------------------
 # ETAPA 3: ÍNDICE DE MOMENTO (IM) & RESPOSTA COMPETITIVA (IRC)
 # ---------------------------------------------------------------------
@@ -427,42 +405,40 @@ pct_metodo_fora = min(95.0, max(5.0, 30.0 - (diferenca_critica * 1.2)))
 pct_metodo_empate = max(5.0, 100.0 - pct_metodo_casa - pct_metodo_fora)
 
 forca_gols_geral = (res_atq_m["Nota_Ataque"] + res_atq_v["Nota_Ataque"]) / 2
-forca_intensidade_ht = (im_final_m + im_final_v) / 2
+forca_intensity_ht = (im_final_m + im_final_v) / 2
 
-if odds["1X2"]["casa_pct"] is not None:
+if odds.get("1X2", {}).get("casa_pct") is not None:
     dif = pct_metodo_casa - odds["1X2"]["casa_pct"]
     linhas_mercados.append(["Vitória Mandante (1)", f"{odds['1X2']['casa_pct']}%", f"{pct_metodo_casa:.1f}%", f"{dif:+.1f}%", "🟢 VALOR" if dif>=5.0 else "🔴 EVITAR" if dif<=-5.0 else "🟡 Neutro"])
 
-if odds["1X2"]["fora_pct"] is not None:
+if odds.get("1X2", {}).get("fora_pct") is not None:
     dif = pct_metodo_fora - odds["1X2"]["fora_pct"]
     linhas_mercados.append(["Vitória Visitante (2)", f"{odds['1X2']['fora_pct']}%", f"{pct_metodo_fora:.1f}%", f"{dif:+.1f}%", "🟢 VALOR" if dif>=5.0 else "🔴 EVITAR" if dif<=-5.0 else "🟡 Neutro"])
 
-if odds["over_05_ht_pct"] is not None:
-    pct_metodo_o05ht = min(95.0, max(5.0, forca_intensidade_ht - 10.0))
+if odds.get("over_05_ht_pct") is not None:
+    pct_metodo_o05ht = min(95.0, max(5.0, forca_intensity_ht - 10.0))
     dif = pct_metodo_o05ht - odds["over_05_ht_pct"]
     linhas_mercados.append(["Gols: Over 0.5 HT (Gol no 1º Tempo)", f"{odds['over_05_ht_pct']}%", f"{pct_metodo_o05ht:.1f}%", f"{dif:+.1f}%", "🟢 VALOR OVER HT" if dif>=5.0 else "🔴 EVITAR OVER HT" if dif<=-5.0 else "🟡 Neutro"])
 
-if odds["over_15_ht_pct"] is not None:
-    pct_metodo_o15ht = min(90.0, max(5.0, forca_intensidade_ht - 35.0))
+if odds.get("over_15_ht_pct") is not None:
+    pct_metodo_o15ht = min(90.0, max(5.0, forca_intensity_ht - 35.0))
     dif = pct_metodo_o15ht - odds["over_15_ht_pct"]
     linhas_mercados.append(["Gols: Over 1.5 HT", f"{odds['over_15_ht_pct']}%", f"{pct_metodo_o15ht:.1f}%", f"{dif:+.1f}%", "🟢 VALOR OVER 1.5 HT" if dif>=5.0 else "🔴 EVITAR OVER 1.5 HT" if dif<=-5.0 else "🟡 Neutro"])
 
-if odds["over_15_ft_pct"] is not None:
-    pct_metodo_o15ft = min(98.0, max(5.0, forca_gols_geral - 5.0))
-    dif = pct_metodo_o15ft - odds["over_15_ft_pct"]
+if odds.get("over_15_ft_pct") is not None:
     pct_metodo_o15ft = min(98.0, max(5.0, forca_gols_geral - 5.0))
     dif = pct_metodo_o15ft - odds["over_15_ft_pct"]
     linhas_mercados.append(["Gols: Over 1.5 FT", f"{odds['over_15_ft_pct']}%", f"{pct_metodo_o15ft:.1f}%", f"{dif:+.1f}%", "🟢 VALOR OVER 1.5" if dif >= 5.0 else "🔴 EVITAR" if dif <= -5.0 else "🟡 Neutro"])
 
-if odds["over_25_ft_pct"] is not None:
+if odds.get("over_25_ft_pct") is not None:
     dif = (forca_gols_geral - 15.0) - odds["over_25_ft_pct"]
     linhas_mercados.append(["Gols: Over 2.5 FT", f"{odds['over_25_ft_pct']}%", f"{(forca_gols_geral - 15.0):.1f}%", f"{dif:+.1f}%", "🟢 VALOR OVER 2.5" if dif >= 5.0 else "🔴 EVITAR / IR NO UNDER" if dif <= -5.0 else "🟡 Neutro"])
 
-if odds["ambas_marcam_sim_pct"] is not None:
+if odds.get("ambas_marcam_sim_pct") is not None:
     dif = (forca_gols_geral - 12.0) - odds["ambas_marcam_sim_pct"]
     linhas_mercados.append(["Ambas Marcam: SIM", f"{odds['ambas_marcam_sim_pct']}%", f"{(forca_gols_geral - 12.0):.1f}%", f"{dif:+.1f}%", "🟢 VALOR AMBAS" if dif >= 5.0 else "🔴 EVITAR" if dif <= -5.0 else "🟡 Neutro"])
 
-if odds["linha_escanteios_mercado"]["over_pct"] is not None:
+if odds.get("linha_escanteios_mercado", {}).get("over_pct") is not None:
     volume_chutes_combinado = (res_atq_m["FVO"] + res_atq_v["FVO"]) / 2
     pct_metodo_cantos = min(95.0, max(5.0, volume_chutes_combinado + 2.0))
     dif = pct_metodo_cantos - odds["linha_escanteios_mercado"]["over_pct"]
@@ -478,18 +454,5 @@ st.table(df_probabilidades)
 
 st.info("💡 Observação: Caso os mercados de Cantos ou Gols HT não possuam dados preenchidos na estrutura de entrada, eles são omitidos automaticamente deste painel.")
 st.write("---")
-
-# ---------------------------------------------------------------------
-# ETAPA 6: LEITURA AUTÔNOMA DE OBSERVAÇÕES E DESFALQUES
-# ---------------------------------------------------------------------
-st.header("📝 Etapa 6: Análise de Observações de Texto Extraídas")
-
-col_obs1, col_obs2 = st.columns(2)
-with col_obs1:
-    st.markdown(f"**Bastidores ({mnd['nome']}):**")
-    st.info(mnd["observacoes_texto"] if mnd["observacoes_texto"] else "Nenhuma observação descrita para este clube.")
-with col_obs2:
-    st.markdown(f"**Bastidores ({vis['nome']}):**")
-    st.warning(vis["observacoes_texto"] if vis["observacoes_texto"] else "Nenhuma observação descrita para este clube.")
 
 
