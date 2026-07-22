@@ -1,15 +1,13 @@
 import streamlit as st
 import pandas as pd
-import time
 import requests
+from bs4 import BeautifulSoup
+import time
 
-# Configuração da página do Streamlit
-st.set_page_config(page_title="Teste de Raspagem FBref", layout="centered")
+st.set_page_config(page_title="Raspador Nativo FBref", layout="centered")
+st.title("⚽ Raspador Nativo - FBref")
+st.markdown("Código adaptado para rodar em celulares sem precisar de pacotes extras.")
 
-st.title("⚽ Raspador Controlado - FBref")
-st.markdown("Versão otimizada para rodar direto no celular.")
-
-# Dicionário mapeando as URLs das ligas direto do FBref
 LIGAS = {
     "Premier League (Inglaterra)": "https://fbref.com",
     "Brasileirão Série A": "https://fbref.com",
@@ -17,7 +15,6 @@ LIGAS = {
     "Serie A (Itália)": "https://fbref.com"
 }
 
-# Interface: Seleção da liga
 liga_selecionada = st.selectbox("Selecione a Liga para testar:", list(LIGAS.keys()))
 
 if "ultimo_acesso" not in st.session_state:
@@ -25,43 +22,65 @@ if "ultimo_acesso" not in st.session_state:
 
 if st.button("Executar Raspagem Real"):
     tempo_atual = time.time()
-    tempo_decorrido = tempo_atual - st.session_state.ultimo_acesso
-    
-    if tempo_decorrido < 4:
-        tempo_restante = int(4 - tempo_decorrido)
-        st.warning(f"⏳ Aguarde {tempo_restante} segundos antes de raspar novamente!")
+    if tempo_atual - st.session_state.ultimo_acesso < 4:
+        st.warning("⏳ Aguarde alguns segundos antes de raspar novamente!")
     else:
         st.session_state.ultimo_acesso = tempo_atual
         url_alvo = LIGAS[liga_selecionada]
         
-        with st.spinner("Conectando ao FBref..."):
+        with st.spinner("Extraindo dados com o leitor padrão do celular..."):
             try:
-                # 🛠️ MUDANÇA AQUI: Baixamos o HTML manualmente primeiro para evitar o erro do lxml
-                headers = {"User-Agent": "Mozilla/5.0"}
+                headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
                 resposta = requests.get(url_alvo, headers=headers)
                 
-                # Forçamos o Pandas a usar o 'html5lib' ou o parser padrão que já existem no celular
-                tabelas = pd.read_html(resposta.text, match="Classificação", flavor="html5lib")
+                # Usa o 'html.parser' que é nativo do Python e funciona em qualquer celular
+                soup = BeautifulSoup(resposta.text, "html.parser")
                 
-                if tabelas:
-                    df = tabelas[0]
+                # Encontra a tabela de classificação pela estrutura do FBref
+                tabela = soup.find("table", {"id": lambda x: x and "results" in x and "overall" in x})
+                
+                if not tabela:
+                    # Segunda tentativa se o ID mudar
+                    tabela = soup.find("table")
+                
+                if tabela:
+                    # Captura os cabeçalhos das colunas
+                    cabecalho = [th.text.strip() for th in tabela.find("thead").find_all("th")]
+                    # O FBref costuma colocar uma coluna vazia ou rank no início, ajustamos os nomes
+                    if cabecalho and cabecalho[0] == "":
+                        cabecalho[0] = "Pos"
+                        
+                    # Limita às colunas principais para não quebrar o layout do celular
+                    colunas_principais = ["Pos", "Equipe", "MP", "V", "E", "D", "GM", "GS", "GD", "PTS"]
                     
-                    # Limpeza simples de colunas indesejadas se elas existirem
-                    for col in ["Notas", "Últimos 5"]:
-                        if col in df.columns:
-                            df = df.drop(columns=[col])
+                    linhas_dados = []
+                    # Varre as linhas da tabela
+                    for linha in tabela.find("tbody").find_all("tr"):
+                        # Ignora linhas de divisão intermediárias que o FBref usa
+                        if "thead" in linha.get("class", []):
+                            continue
+                            
+                        # Captura o texto de cada célula (th e td)
+                        celulas = [linha.find("th")] + linha.find_all("td")
+                        valores = [c.text.strip() for c in celulas if c is not None]
+                        
+                        if valores:
+                            linhas_dados.append(valores)
                     
-                    st.success(f"📊 Dados de {liga_selecionada} capturados!")
-                    st.dataframe(df, use_container_width=True, hide_index=True)
+                    # Cria o DataFrame mapeando os dados extraídos
+                    df_bruto = pd.DataFrame(linhas_dados)
+                    
+                    # Ajusta as colunas dinamicamente baseado no tamanho extraído
+                    df_bruto.columns = cabecalho[:len(df_bruto.columns)]
+                    
+                    # Filtra apenas o básico para ficar bonito na tela do celular
+                    colunas_finais = [col for col in colunas_principais if col in df_bruto.columns]
+                    df_exibir = df_bruto[colunas_finais]
+                    
+                    st.success(f"📊 Dados de {liga_selecionada} carregados!")
+                    st.dataframe(df_exibir, use_container_width=True, hide_index=True)
                 else:
-                    st.error("A tabela não foi encontrada.")
+                    st.error("Não foi possível encontrar a tabela na página.")
                     
             except Exception as e:
-                # Se ainda assim falhar por falta do html5lib, tentamos a última alternativa nativa
-                try:
-                    tabelas = pd.read_html(resposta.text, match="Classificação", flavor="bs4")
-                    df = tabelas[0]
-                    st.success(f"📊 Dados de {liga_selecionada} capturados (Modo de Segurança)!")
-                    st.dataframe(df, use_container_width=True, hide_index=True)
-                except Exception as erro_final:
-                    st.error(f"Erro na raspagem pelo celular: {erro_final}")
+                st.error(f"Erro na raspagem manual: {e}")
