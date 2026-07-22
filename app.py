@@ -1,15 +1,15 @@
 import streamlit as st
 import pandas as pd
 import time
+import requests
 
 # Configuração da página do Streamlit
 st.set_page_config(page_title="Teste de Raspagem FBref", layout="centered")
 
 st.title("⚽ Raspador Controlado - FBref")
-st.markdown("Interface simples para testar a captura de dados respeitando o limite de requisições.")
+st.markdown("Versão otimizada para rodar direto no celular.")
 
-# Dicionário mapeando os IDs e nomes das ligas direto do FBref
-# IDs fixos do site para o ano corrente (2025-2026 / 2026)
+# Dicionário mapeando as URLs das ligas direto do FBref
 LIGAS = {
     "Premier League (Inglaterra)": "https://fbref.com",
     "Brasileirão Série A": "https://fbref.com",
@@ -20,7 +20,6 @@ LIGAS = {
 # Interface: Seleção da liga
 liga_selecionada = st.selectbox("Selecione a Liga para testar:", list(LIGAS.keys()))
 
-# Inicializa um indicador de controle de tempo no Streamlit (Session State)
 if "ultimo_acesso" not in st.session_state:
     st.session_state.ultimo_acesso = 0
 
@@ -28,39 +27,41 @@ if st.button("Executar Raspagem Real"):
     tempo_atual = time.time()
     tempo_decorrido = tempo_atual - st.session_state.ultimo_acesso
     
-    # 🚨 CONTROLE DE SEGURANÇA: Garante um intervalo mínimo de 4 segundos entre cliques
-    # (4 segundos por clique garante no máximo 15 requisições por minuto, abaixo do limite de 20)
     if tempo_decorrido < 4:
         tempo_restante = int(4 - tempo_decorrido)
-        st.warning(f"⏳ Aguarde {tempo_restante} segundos antes de raspar novamente para evitar bloqueios!")
+        st.warning(f"⏳ Aguarde {tempo_restante} segundos antes de raspar novamente!")
     else:
-        # Atualiza o cronômetro do último acesso
         st.session_state.ultimo_acesso = tempo_atual
-        
         url_alvo = LIGAS[liga_selecionada]
         
-        with st.spinner("Conectando ao FBref e interpretando a tabela HTML..."):
+        with st.spinner("Conectando ao FBref..."):
             try:
-                # O Pandas localiza a tabela que contém o texto "Classificação"
-                tabelas = pd.read_html(url_alvo, match="Classificação")
+                # 🛠️ MUDANÇA AQUI: Baixamos o HTML manualmente primeiro para evitar o erro do lxml
+                headers = {"User-Agent": "Mozilla/5.0"}
+                resposta = requests.get(url_alvo, headers=headers)
+                
+                # Forçamos o Pandas a usar o 'html5lib' ou o parser padrão que já existem no celular
+                tabelas = pd.read_html(resposta.text, match="Classificação", flavor="html5lib")
                 
                 if tabelas:
                     df = tabelas[0]
                     
-                    # Limpeza das colunas indesejadas que o site gera
-                    colunas_remover = ["Notas", "Últimos 5"]
-                    for col in colunas_remover:
+                    # Limpeza simples de colunas indesejadas se elas existirem
+                    for col in ["Notas", "Últimos 5"]:
                         if col in df.columns:
                             df = df.drop(columns=[col])
                     
-                    st.success(f"📊 Dados de {liga_selecionada} capturados com sucesso!")
-                    
-                    # Exibe a tabela final limpa
+                    st.success(f"📊 Dados de {liga_selecionada} capturados!")
                     st.dataframe(df, use_container_width=True, hide_index=True)
                 else:
-                    st.error("A tabela não pôde ser encontrada na estrutura da página.")
+                    st.error("A tabela não foi encontrada.")
                     
             except Exception as e:
-                st.error(f"Erro na raspagem: {e}")
-                st.info("Se o site retornar erro 429, significa que o limite de requisições por IP foi excedido. Aguarde 1 minuto.")
-pip install lxml
+                # Se ainda assim falhar por falta do html5lib, tentamos a última alternativa nativa
+                try:
+                    tabelas = pd.read_html(resposta.text, match="Classificação", flavor="bs4")
+                    df = tabelas[0]
+                    st.success(f"📊 Dados de {liga_selecionada} capturados (Modo de Segurança)!")
+                    st.dataframe(df, use_container_width=True, hide_index=True)
+                except Exception as erro_final:
+                    st.error(f"Erro na raspagem pelo celular: {erro_final}")
