@@ -273,6 +273,7 @@ dados_partida_completa = {
         "observacoes_texto": "Três defensores titulares estão suspensos e desfalcam a equipe."
     }
 }
+if odds["over_15_ft_pct"] is not None:
     pct_metodo_o15ft = min(98.0, max(5.0, forca_gols_geral - 5.0))
     dif = pct_metodo_o15ft - odds["over_15_ft_pct"]
     linhas_mercados.append(["Gols: Over 1.5 FT", f"{odds['over_15_ft_pct']}%", f"{pct_metodo_o15ft:.1f}%", f"{dif:+.1f}%", "🟢 VALOR OVER 1.5" if dif >= 5.0 else "🔴 EVITAR" if dif <= -5.0 else "🟡 Neutro"])
@@ -280,6 +281,7 @@ dados_partida_completa = {
 if odds["over_25_ft_pct"] is not None:
     dif = (forca_gols_geral - 15.0) - odds["over_25_ft_pct"]
     linhas_mercados.append(["Gols: Over 2.5 FT", f"{odds['over_25_ft_pct']}%", f"{(forca_gols_geral - 15.0):.1f}%", f"{dif:+.1f}%", "🟢 VALOR OVER 2.5" if dif >= 5.0 else "🔴 EVITAR / IR NO UNDER" if dif <= -5.0 else "🟡 Neutro"])
+
 
 if odds["ambas_marcam_sim_pct"] is not None:
     dif = (forca_gols_geral - 12.0) - odds["ambas_marcam_sim_pct"]
