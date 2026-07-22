@@ -62,10 +62,8 @@ class PainelInicialV28:
             posicao_ponderada = posicao_atual
         return self.definir_nivel_posicao(int(np.round(posicao_ponderada)))
 
-
-
-            # =====================================================================
-# DIVISÓRIA 2: MOTOR ESTATÍSTICO PARTE B (MÁQUINA DE OVERALL - PARTE 1)
+# =====================================================================
+# DIVISÓRIA 2: MOTOR ESTATÍSTICO PARTE B (MÁQUINA DE OVERALL)
 # =====================================================================
 
 class MaquinaOverallV28:
@@ -111,7 +109,7 @@ class MaquinaOverallV28:
                 "xg_cedido": jogo['xg_cedido'] * fmp['erro_defensivo']
             })
         return jogos_modulados
-            def calcular_bloco_ataque(self, jogos_modulados: List[Dict[str, float]], liga: Dict[str, float]) -> Dict[str, float]:
+    def calcular_bloco_ataque(self, jogos_modulados: List[Dict[str, float]], liga: Dict[str, float]) -> Dict[str, float]:
         if not jogos_modulados: return {"FVO": self.base_score, "FCO": self.base_score, "Nota_Ataque": self.base_score}
         keys = ["ataques", "ataques_perigosos", "chutes", "chutes_gol", "gols", "xg"]
         med_time = {k: np.mean([j[k] for j in jogos_modulados]) for k in keys}
@@ -167,6 +165,7 @@ class MaquinaOverallV28:
         fri_nota = min(100.0, (time_pressao['pontos_recuperados'] / max(0.0001, time_pressao['pontos_disputados_atras'])) * 100.0)
         fzc_nota = min(100.0, max(0.0, 50.0 + ((time_pressao['gols_marcados_fim'] - time_pressao['gols_sofridos_fim']) * 10.0)))
         return {"Nota_Resistencia": round((fzc_nota * 0.30) + (egz_nota * 0.30) + (fri_nota * 0.20) + (fcd_nota * 0.20), 2)}
+
 # =====================================================================
 # DIVISÓRIA 2: MOTOR ESTATÍSTICO PARTE C (ÍNDICE DE MOMENTO)
 # =====================================================================
@@ -255,7 +254,7 @@ dados_partida_completa = {
         "observacoes_texto": "O time contratou um novo atacante titular que estreia hoje."
     },
     "visitante": {
-        "nome": "Time Visitante B", "liga_origem": "Liga Nacional 2",
+        "name": "Time Visitante B", "liga_origem": "Liga Nacional 2",
         "posicao_real": 16, "posicao_momentanea": 18, "posicao_pre_campeonato": 10,
         "historico_ofensivo_jogos": [
             {"nivel_adversario_dia": 2, "ataques": 85, "ataques_perigosos": 45, "chutes": 9, "chutes_gol": 2, "gols": 0, "xg": 0.7}
@@ -286,6 +285,7 @@ vis = dados_partida_completa["visitante"]
 inicializador_p1 = PainelInicialV28(rodada_atual=ctx["rodada_atual"])
 nv_real_m = inicializador_p1.calcular_nivel_dinamico(mnd["posicao_pre_campeonato"], mnd["posicao_real"])
 nv_real_v = inicializador_p1.calcular_nivel_dinamico(vis["posicao_pre_campeonato"], vis["posicao_real"])
+
 # ---------------------------------------------------------------------
 # ETAPA 6: LEITURA AUTÔNOMA DE OBSERVAÇÕES E DESFALQUES
 # ---------------------------------------------------------------------
@@ -447,14 +447,12 @@ if odds.get("linha_escanteios_mercado", {}).get("over_pct") is not None:
     linhas_mercados.append([f"Escanteios: Over {odds['linha_escanteios_mercado']['linha']}", f"{odds['linha_escanteios_mercado']['over_pct']}%", f"{pct_metodo_cantos:.1f}%", f"{dif:+.1f}%", "🟢 VALOR CANTOS" if dif >= 5.0 else "🔴 EVITAR CANTOS" if dif <= -5.0 else "🟡 Neutro"])
 
 if pct_metodo_casa > 60.0 and diferenca_critica >= 10.0:
-    linhas_mercados.append(["[Sugestão App] Empate Anula (DNB Casa)", "Proteção Ativa", "Alta Probabilidade", "FMP Favorável", "💎 ENTRADA RECOMENDADA"])
+    linhas_mercados.append(["[Sugestão App] Empate Anula (DNB Casa)", "Proteção Active", "Alta Probabilidade", "FMP Favorável", "💎 ENTRADA RECOMENDADA"])
 elif pct_metodo_fora > 45.0 and diferenca_critica <= -10.0:
-    linhas_mercados.append(["[Sugestão App] Empate Anula (DNB Fora)", "Proteção Ativa", "Alta Probabilidade", "FMP Favorável", "💎 ENTRADA RECOMENDADA"])
+    linhas_mercados.append(["[Sugestão App] Empate Anula (DNB Fora)", "Proteção Active", "Alta Probabilidade", "FMP Favorável", "💎 ENTRADA RECOMENDADA"])
 
 df_probabilidades = pd.DataFrame(linhas_mercados, columns=["Mercado Operacional", "% Mercado", "% Método", "Variação Líquida", "Alerta Técnico"])
 st.table(df_probabilidades)
 
 st.info("💡 Observação: Caso os mercados de Cantos ou Gols HT não possuam dados preenchidos na estrutura de entrada, eles são omitidos automaticamente deste painel.")
 st.write("---")
-
-
