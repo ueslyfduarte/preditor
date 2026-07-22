@@ -63,3 +63,4 @@ if st.button("Executar Raspagem Real"):
             except Exception as e:
                 st.error(f"Erro na raspagem: {e}")
                 st.info("Se o site retornar erro 429, significa que o limite de requisições por IP foi excedido. Aguarde 1 minuto.")
+pip install lxml
