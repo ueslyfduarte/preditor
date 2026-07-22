@@ -273,34 +273,48 @@ dados_partida_completa = {
         "observacoes_texto": "Três defensores titulares estão suspensos e desfalcam a equipe."
     }
 }
-# =====================================================================
-# DIVISÓRIA 4: EXECUÇÃO DOS MÓDULOS E APRESENTAÇÃO DOS RESULTADOS
-# =====================================================================
+    pct_metodo_o15ft = min(98.0, max(5.0, forca_gols_geral - 5.0))
+    dif = pct_metodo_o15ft - odds["over_15_ft_pct"]
+    linhas_mercados.append(["Gols: Over 1.5 FT", f"{odds['over_15_ft_pct']}%", f"{pct_metodo_o15ft:.1f}%", f"{dif:+.1f}%", "🟢 VALOR OVER 1.5" if dif >= 5.0 else "🔴 EVITAR" if dif <= -5.0 else "🟡 Neutro"])
 
-ctx = dados_partida_completa["contexto_confronto"]
-mnd = dados_partida_completa["mandante"]
-vis = dados_partida_completa["visitante"]
-odds = dados_partida_completa["odds_mercado_porcentagens"]
+if odds["over_25_ft_pct"] is not None:
+    dif = (forca_gols_geral - 15.0) - odds["over_25_ft_pct"]
+    linhas_mercados.append(["Gols: Over 2.5 FT", f"{odds['over_25_ft_pct']}%", f"{(forca_gols_geral - 15.0):.1f}%", f"{dif:+.1f}%", "🟢 VALOR OVER 2.5" if dif >= 5.0 else "🔴 EVITAR / IR NO UNDER" if dif <= -5.0 else "🟡 Neutro"])
 
-st.title("⚽ MONITOR DE PROCESSAMENTO METÓDICO V2.8")
-st.markdown(f"Análise do Confronto: **{mnd['nome']}** vs **{vis['nome']}**")
+if odds["ambas_marcam_sim_pct"] is not None:
+    dif = (forca_gols_geral - 12.0) - odds["ambas_marcam_sim_pct"]
+    linhas_mercados.append(["Ambas Marcam: SIM", f"{odds['ambas_marcam_sim_pct']}%", f"{(forca_gols_geral - 12.0):.1f}%", f"{dif:+.1f}%", "🟢 VALOR AMBAS" if dif >= 5.0 else "🔴 EVITAR" if dif <= -5.0 else "🟡 Neutro"])
+
+if odds["linha_escanteios_mercado"]["over_pct"] is not None:
+    volume_chutes_combinado = (res_atq_m["FVO"] + res_atq_v["FVO"]) / 2
+    pct_metodo_cantos = min(95.0, max(5.0, volume_chutes_combinado + 2.0))
+    dif = pct_metodo_cantos - odds["linha_escanteios_mercado"]["over_pct"]
+    linhas_mercados.append([f"Escanteios: Over {odds['linha_escanteios_mercado']['linha']}", f"{odds['linha_escanteios_mercado']['over_pct']}%", f"{pct_metodo_cantos:.1f}%", f"{dif:+.1f}%", "🟢 VALOR CANTOS" if dif >= 5.0 else "🔴 EVITAR CANTOS" if dif <= -5.0 else "🟡 Neutro"])
+
+if pct_metodo_casa > 60.0 and diferenca_critica >= 10.0:
+    linhas_mercados.append(["[Sugestão App] Empate Anula (DNB Casa)", "Proteção Ativa", "Alta Probabilidade", "FMP Favorável", "💎 ENTRADA RECOMENDADA"])
+elif pct_metodo_fora > 45.0 and diferenca_critica <= -10.0:
+    linhas_mercados.append(["[Sugestão App] Empate Anula (DNB Fora)", "Proteção Ativa", "Alta Probabilidade", "FMP Favorável", "💎 ENTRADA RECOMENDADA"])
+
+df_probabilidades = pd.DataFrame(linhas_mercados, columns=["Mercado Operacional", "% Mercado", "% Método", "Variação Líquida", "Alerta Técnico"])
+st.table(df_probabilidades)
+
+st.info("💡 Observação: Caso os mercados de Cantos ou Gols HT não possuam dados preenchidos na estrutura de entrada, eles são omitidos automaticamente deste painel.")
 st.write("---")
 
 # ---------------------------------------------------------------------
-# ETAPA 1: RESULTADOS DO PAINEL INICIAL (POSICIONAMENTO)
+# ETAPA 6: LEITURA AUTÔNOMA DE OBSERVAÇÕES E DESFALQUES
 # ---------------------------------------------------------------------
-st.header("📋 Etapa 1: Painel de Posicionamento Inicial")
+st.header("📝 Etapa 6: Análise de Observações de Texto Extraídas")
 
-motor_p1 = PainelInicialV28(rodada_atual=ctx["rodada_atual"])
-nv_real_m = motor_p1.definir_nivel_posicao(mnd["posicao_real"])
-nv_real_v = motor_p1.definir_nivel_posicao(vis["posicao_real"])
+col_obs1, col_obs2 = st.columns(2)
+with col_obs1:
+    st.markdown(f"**Bastidores ({mnd['nome']}):**")
+    st.info(mnd["observacoes_texto"] if mnd["observacoes_texto"] else "Nenhuma observação descrita para este clube.")
+with col_obs2:
+    st.markdown(f"**Bastidores ({vis['nome']}):**")
+    st.warning(vis["observacoes_texto"] if vis["observacoes_texto"] else "Nenhuma observação descrita para este clube.")
 
-tabela_p1 = {
-    "Métrica de Posição": ["Liga de Origem", "Posição Atual Real", "Classificação Momentânea (5j)", "Prospecção Teórica Pré"],
-    mnd["nome"]: [mnd["liga_origem"], f"{mnd['posicao_real']}º (Nível {nv_real_m})", f"{mnd['posicao_momentanea']}º", f"{mnd['posicao_pre_campeonato']}º"],
-    vis["nome"]: [vis["liga_origem"], f"{vis['posicao_real']}º (Nível {nv_real_v})", f"{vis['posicao_momentanea']}º", f"{vis['posicao_pre_campeonato']}º"]
-}
-st.table(tabela_p1)
 
 st.markdown("**📝 Resenha Estatística - Posicionamento:**")
 if mnd["posicao_real"] < mnd["posicao_pre_campeonato"]:
