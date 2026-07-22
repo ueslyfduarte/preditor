@@ -273,7 +273,8 @@ dados_partida_completa = {
         "observacoes_texto": "Três defensores titulares estão suspensos e desfalcam a equipe."
     }
 }
-if odds["over_15_ft_pct"] is not None:
+if odds and isinstance(odds, dict) and odds.get("over_15_ft_pct") is not None:
+
     pct_metodo_o15ft = min(98.0, max(5.0, forca_gols_geral - 5.0))
     dif = pct_metodo_o15ft - odds["over_15_ft_pct"]
     linhas_mercados.append(["Gols: Over 1.5 FT", f"{odds['over_15_ft_pct']}%", f"{pct_metodo_o15ft:.1f}%", f"{dif:+.1f}%", "🟢 VALOR OVER 1.5" if dif >= 5.0 else "🔴 EVITAR" if dif <= -5.0 else "🟡 Neutro"])
