@@ -2,12 +2,16 @@ import streamlit as st
 
 # ==============================================================================
 # CAMADA 1: INFRAESTRUTURA E CREDENCIAIS (SETUP)
-# Este bloco lê as chaves em silêncio nos bastidores. Nada é exibido na tela.
+# Este bloco tenta ler as chaves em silêncio. Se falhar, usa um padrão seguro.
 # ==============================================================================
-CHAVE_API_FOOTBALL = str(st.secrets['API_FOOTBALL_KEY'])
-CHAVE_FOOTYSTATS   = str(st.secrets['FOOTYSTATS_KEY'])
-CHAVE_THE_ODDS     = str(st.secrets['THE_ODDS_KEY'])
-
+try:
+    CHAVE_API_FOOTBALL = st.secrets["API_FOOTBALL_KEY"]
+    CHAVE_FOOTYSTATS   = st.secrets["FOOTYSTATS_KEY"]
+    CHAVE_THE_ODDS     = st.secrets["THE_ODDS_KEY"]
+except Exception:
+    CHAVE_API_FOOTBALL = "Chave Pendente"
+    CHAVE_FOOTYSTATS   = "Chave Pendente"
+    CHAVE_THE_ODDS     = "Chave Pendente"
 
 # ==============================================================================
 # CAMADA 2: VARIÁVEIS DE ENTRADA (INPUTS)
@@ -221,11 +225,4 @@ pontuacao_final_A = (im_final_A * peso_im) + (io_final_A * peso_io) + (ifp_final
 pontuacao_final_B = (im_final_B * peso_im) + (io_final_B * peso_io) + (ifp_final_B * peso_ifp)
 
 # Exibição Final
-col_res_A, col_res_B = st.columns(2)
-with col_res_A:
-    st.subheader(f"Resultado Final: {time_A}")
-    st.write(f"**Nota Consolidada ({time_A}): {pontuacao_final_A:.2f}**")
-with col_res_B:
-    st.subheader(f"Resultado Final: {time_B}")
-    st.write(f"**Nota Consolidada ({time_B}): {pontuacao_final_B:.2f}**")
 
