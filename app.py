@@ -225,4 +225,12 @@ pontuacao_final_A = (im_final_A * peso_im) + (io_final_A * peso_io) + (ifp_final
 pontuacao_final_B = (im_final_B * peso_im) + (io_final_B * peso_io) + (ifp_final_B * peso_ifp)
 
 # Exibição Final
-col_res_A, col_res_B = st.columns(2)with col_res_A:st.subheader(f"Resultado Final: {time_A}")st.write(f"Nota Consolidada ({time_A}): {pontuacao_final_A:.2f}")with col_res_B:st.subheader(f"Resultado Final: {time_B}")st.write(f"Nota Consolidada ({time_B}): {pontuacao_final_B:.2f}")
+col_res_A, col_res_B = st.columns(2)
+
+with col_res_A:
+    st.subheader(f"Resultado Final: {time_A}")
+    st.write(f"**Nota Consolidada ({time_A}): {pontuacao_final_A:.2f}**")
+
+with col_res_B:
+    st.subheader(f"Resultado Final: {time_B}")
+    st.write(f"**Nota Consolidada ({time_B}): {pontuacao_final_B:.2f}**")
