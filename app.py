@@ -4,9 +4,10 @@ import streamlit as st
 # CAMADA 1: INFRAESTRUTURA E CREDENCIAIS (SETUP)
 # Este bloco lê as chaves em silêncio nos bastidores. Nada é exibido na tela.
 # ==============================================================================
-CHAVE_API_FOOTBALL = st.secrets["API_FOOTBALL_KEY"]
-CHAVE_FOOTYSTATS   = st.secrets["FOOTYSTATS_KEY"]
-CHAVE_THE_ODDS     = st.secrets["THE_ODDS_KEY"]
+CHAVE_API_FOOTBALL = str(st.secrets['API_FOOTBALL_KEY'])
+CHAVE_FOOTYSTATS   = str(st.secrets['FOOTYSTATS_KEY'])
+CHAVE_THE_ODDS     = str(st.secrets['THE_ODDS_KEY'])
+
 
 # ==============================================================================
 # CAMADA 2: VARIÁVEIS DE ENTRADA (INPUTS)
