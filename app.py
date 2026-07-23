@@ -225,3 +225,6 @@ with col_res_A:
     st.subheader(f"Resultado Final: {time_A}")
     st.write(f"**Nota Consolidada ({time_A}): {pontuacao_final_A:.2f}**")
 with col_res_B:
+    st.subheader(f"Resultado Final: {time_B}")
+    st.write(f"**Nota Consolidada ({time_B}): {pontuacao_final_B:.2f}**")
+
